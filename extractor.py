@@ -1,6 +1,9 @@
+#!/usr/bin/env python3
+
 import webvtt # For parsing VTT files
 import string # For punctuation removal
 import sys     # For file operations (like cleanup)
+import re
 
 # --- Function to Extract Text from VTT ---
 def extract_text_from_vtt(vtt_filepath):
@@ -92,6 +95,32 @@ def save_words_to_file(word_list, output_filepath):
     print(f"An error occurred while saving the file: {e}")
     return False
 
+def clean_word_list(words):
+    """
+    Removes words that are 2 characters or less,
+    and words that contain numbers from a list of words.
+
+    Args:
+        words (list): A list of strings (words).
+
+    Returns:
+        list: A new list containing only the cleaned words.
+    """
+    cleaned_words = []
+    # Use regex to check if a word contains any digit (0-9)
+    digit_pattern = re.compile(r'\d')
+
+    for word in words:
+        is_long_enough = len(word) > 4
+        # Check if the word contains any digit using the compiled regex pattern
+        contains_digit = bool(digit_pattern.search(word))
+
+        # If the word is long enough AND does not contain a digit, add it to the cleaned list
+        if is_long_enough and not contains_digit:
+            cleaned_words.append(word)
+
+    return cleaned_words
+
 # --- Main Execution ---
 if __name__ == "__main__":
     if len(sys.argv) < 1:
@@ -100,7 +129,7 @@ if __name__ == "__main__":
 
     input_vtt_file = sys.argv[1] # Get the first argument as the input file
 
-    output_unique_words_file = input_vtt_file + ' - nodup.txt'
+    output_unique_words_file = 'clean_words.txt'
 
 
     # --- Processing Steps ---
@@ -119,29 +148,13 @@ if __name__ == "__main__":
         unique_words = extract_unique_words_from_text(extracted_text)
 
         if unique_words:
-            print(f"Found {len(unique_words)} unique words.")
-            # print("\n--- Unique Words ---")
-            # for word in unique_words: # Optional: print unique words here
-            #     print(f"- {word}")
-            # print("--------------------")
+            clean_unique_words = clean_word_list(unique_words)
+            print(f"Found {len(clea_unique_words)} unique words.")
 
             # 3. Save the unique words to the output file
             print(f"\nAttempting to save unique words to '{output_unique_words_file}'...")
-            save_words_to_file(unique_words, output_unique_words_file)
+            save_words_to_file(clean_unique_words, output_unique_words_file)
         else:
             print("No unique words found in the extracted text.")
     else:
         print("Could not extract text from VTT file. Aborting.")
-
-    # --- Optional: Clean up the dummy files ---
-    #try:
-        #if os.path.exists(input_vtt_file):
-            #os.remove(input_vtt_file)
-            #print(f"\nRemoved sample VTT file: '{input_vtt_file}'")
-        #if os.path.exists(output_unique_words_file):
-            # Keeping the output file might be desired, but we remove it for cleanup
-            #os.remove(output_unique_words_file)
-            #print(f"Removed output file: '{output_unique_words_file}'")
-    #except OSError as e:
-    #    print(f"Error removing sample files: {e}")
-
